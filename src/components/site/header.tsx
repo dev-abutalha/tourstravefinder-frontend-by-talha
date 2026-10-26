@@ -25,6 +25,7 @@ import { RealtimeSearch } from '@/components/site/realtime-search';
 import { useCart } from '@/components/cart-provider';
 import { useAuth } from '@/components/auth-provider';
 import { cn } from '@/lib/utils';
+import { mediaUrl } from '@/lib/media';
 import type { MenuData, MenuItem, MenuSection } from '@/lib/types';
 
 type MenuKey = 'places' | 'things' | 'blog';
@@ -552,7 +553,7 @@ export function Header({
                         >
                           {item.image ? (
                             <img
-                              src={item.image}
+                              src={mediaUrl(item.image)}
                               alt=""
                               loading="lazy"
                               className="size-9 shrink-0 rounded-full object-cover"

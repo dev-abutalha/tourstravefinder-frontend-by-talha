@@ -1,6 +1,20 @@
 import type { Envelope } from './types';
+import { rewriteMediaString } from './media';
 
 const SERVER_BASE = process.env.API_URL ?? 'http://127.0.0.1:4000';
+
+/** Recursively rewrite legacy local media paths to the live WordPress uploads. */
+function normalizeMedia<T>(value: T): T {
+  if (typeof value === 'string') return rewriteMediaString(value) as T;
+  if (Array.isArray(value)) return value.map((item) => normalizeMedia(item)) as T;
+  if (value && typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      (value as Record<string, unknown>)[key] = normalizeMedia((value as Record<string, unknown>)[key]);
+    }
+    return value;
+  }
+  return value;
+}
 
 export class ApiError extends Error {
   code: string;
@@ -34,7 +48,7 @@ async function parse<T>(res: Response): Promise<T> {
       err?.error?.details,
     );
   }
-  return json as T;
+  return normalizeMedia(json as T);
 }
 
 /** Browser-side API call through the Next.js proxy. */
@@ -63,7 +77,7 @@ export async function serverGetEnvelope<T>(path: string, revalidate = 60): Promi
   if (!res.ok) {
     throw new ApiError(`Failed to load ${path}`, 'SERVER_FETCH_FAILED', res.status);
   }
-  return (await res.json()) as Envelope<T>;
+  return normalizeMedia((await res.json()) as Envelope<T>);
 }
 
 export async function serverGet<T>(path: string, revalidate = 60): Promise<T> {
